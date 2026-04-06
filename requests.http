@@ -1,0 +1,80 @@
+### CampusConnect API Tests
+
+@nestjs_url = http://localhost:3000
+@go_url = http://localhost:8080
+@api_key = secure_api_key_123
+
+### 1. User CRUD - Create User
+# @name registerUser
+POST {{nestjs_url}}/users
+Content-Type: application/json
+
+{
+  "email": "test@student.com",
+  "password": "Password123!",
+  "name": "Test Student"
+}
+
+### 2. User CRUD - Login
+# @name loginUser
+POST {{nestjs_url}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@student.com",
+  "password": "Password123!"
+}
+
+> {%
+    client.global.set("auth_token", response.body.access_token);
+%}
+
+### 3. Event CRUD - Create Event
+# @name createEvent
+POST {{nestjs_url}}/events
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "title": "Spring Hackathon 2024",
+  "description": "Tech event for students.",
+  "date": "2024-05-20T10:00:00Z",
+  "location": "Istanbul",
+  "category": "Technology"
+}
+
+### 4. Event CRUD - Get Events (Pagination & Filters)
+GET {{nestjs_url}}/events?page=1&limit=10&location=Istanbul&category=Technology
+
+### 5. Event Participation - Join Event via GraphQL
+# @name joinEvent
+POST {{nestjs_url}}/graphql
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "query": "mutation { joinEvent(eventId: 1) { id eventId userId } }"
+}
+
+### 6. Event Participation - Leave Event via GraphQL
+# @name leaveEvent
+POST {{nestjs_url}}/graphql
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "query": "mutation { leaveEvent(eventId: 1) }"
+}
+
+### 7. Fetch Analytics via Go Service (Top Events)
+GET {{go_url}}/analytics/top-events
+x-api-key: {{api_key}}
+
+### 8. Fetch Analytics via Go Service (Weekly Participation Stats)
+GET {{go_url}}/analytics/stats
+x-api-key: {{api_key}}
+
+### 9. Test Rate Limiting on Go Service (Requires sending > 60 requests/min)
+# Will return RFC 7807 problem details
+GET {{go_url}}/analytics/top-events
+x-api-key: {{api_key}}
